@@ -13,6 +13,8 @@ library(tidycensus)
 library(sf)
 library(plotly)
 library(crosstalk)
+library(leaflet)
+library(gganimate)
 ```
 
 
@@ -110,14 +112,107 @@ shared_bigtable <- SharedData$new(big_table %>%
 ```
 
 ```{r}
-filter_slider("mapyear", "YEAR", shared_bigtable, 
-              column=~year)
+nc_share_slide <- filter_slider("mapyear", "YEAR", shared_bigtable, 
+              column=~year, timeFormat = "%Y")
+```
+
+
+```{r}
+GreenPalette <- colorNumeric(palette = "Greens",
+                               domain = big_table$estimate)
+
+big_table %>% 
+  st_transform(crs = "+init=epsg:4326") %>%
+  leaflet(width = "100%") %>%
+  addProviderTiles(provider = "CartoDB.Positron") %>% 
+  addPolygons(fillOpacity = 0.7,
+              smoothFactor = 0,
+              stroke = FALSE, 
+              color = ~GreenPalette(estimate))
+```
+
+
+```{r}
+GreenPalette <- colorNumeric(palette = "Greens",
+                               domain = big_table$estimate)
+
+nc_share_leaf <- (shared_bigtable %>% 
+  #st_transform(crs = "+init=epsg:4326") %>%
+  leaflet(width = "100%") %>%
+  addProviderTiles(provider = "CartoDB.Positron") %>% 
+  addPolygons(fillOpacity = 0.7,
+              smoothFactor = 0,
+              stroke = FALSE, 
+              color = ~GreenPalette(estimate)))
+```
+
+
+```{r}
+bscols(nc_share_slide, nc_share_leaf)
+```
+
+Fifth:  annimate with gganimate
+
+```{r}
+big3 <- big_table %>% mutate(year = as.numeric(year))
+
+big3p <- ggplot() +
+  geom_sf(data = big3 %>% filter(year == 2016), 
+          aes(fill = estimate, color = estimate)) +
+  geom_sf(data = big3 %>% filter(year == 2013),
+          aes(fill = estimate, color = estimate)) +
+  coord_sf(crs = 4269, datum = NA) +
+  scale_fill_viridis_c() +
+  scale_color_viridis_c() +
+  view_zoom_manual(1, 1, xmin = views$xmin, xmax = views$xmax, 
+                   ymin = views$ymin, ymax = views$ymax, wrap = TRUE)
+  # facet_wrap(~ year) +
+  #  labs(title = 'Year: {frame_time}') +
+  #transition_time(year) +
+  #ease_aes('linear')
+
+big3p
+
+animate(big3p, 100, 10)
+```
+
+
+```{r}
+earth <- sf::st_as_sf(rnaturalearth::countries110)
+views <- data.frame(rbind(
+  st_bbox(earth[earth$name == 'Denmark',]),
+  st_bbox(earth[earth$name == 'Australia',])
+))
+p <- ggplot() + 
+  geom_sf(data = earth, fill = 'white') + 
+  geom_sf(data = earth[earth$name %in% c('Denmark', 'Australia'),], fill = 'forestgreen') + 
+  theme(panel.background = element_rect('lightblue')) + 
+  view_zoom_manual(1, 1, xmin = views$xmin, xmax = views$xmax, ymin = views$ymin, ymax = views$ymax, wrap = TRUE)
+animate(p, 100, 10)
 ```
 
 
 
 
-Fifth:  foo
+```{r}
+plot_13 <- ggplot(nc_2013) +
+  geom_sf(aes(fill = estimate, color = estimate)) 
+
+plot_14 <- ggplot(nc_2014) +
+  geom_sf(aes(fill = estimate, color = estimate)) 
+
+plot_15 <- ggplot(nc_2015) +
+  geom_sf(aes(fill = estimate, color = estimate)) 
+
+plot_16 <- ggplot(nc_2016) +
+  geom_sf(aes(fill = estimate, color = estimate)) 
+
+plot_13
+```
+
+
+
+Sixth:  foo
 
 ```{r}
 
