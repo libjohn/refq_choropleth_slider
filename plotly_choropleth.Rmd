@@ -1,0 +1,208 @@
+---
+title: "Plotly Choropleth"
+author: "John Little"
+date: "`r Sys.Date()`"
+output: html_notebook
+---
+
+## Load Libraries
+
+```{r}
+library(tidyverse)
+library(tidycensus)
+library(sf)
+library(plotly)
+library(crosstalk)
+```
+
+
+
+## Get Census Data
+
+```{r}
+nc_2016 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          geometry = TRUE) %>% 
+  mutate(year = "2016")
+
+nc_2015 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2015,
+          geometry = TRUE) %>% 
+  mutate(year = "2015")
+
+nc_2014 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2014,
+          geometry = TRUE) %>% 
+  mutate(year = "2014")
+
+nc_2013 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2013,
+          geometry = TRUE) %>% 
+  mutate(year = "2013")
+```
+
+## Bind Rows
+
+```{r}
+big_table <- rbind(nc_2016, nc_2015, nc_2014, nc_2013) 
+glimpse(big_table)
+
+big_table2 <- big_table
+st_geometry(big_table2) <- NULL
+```
+
+
+## Test
+
+first:  ggplot facet_wrap
+
+```{r}
+ggplot(big_table) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  facet_wrap(~ year)
+```
+
+
+Second:  side by side bargraph
+
+```{r}
+big_table2 %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Mecklenburg" | 
+           county == "Durham" | 
+           county == "Guilford") %>% 
+  select(county, estimate, year) %>% 
+  gather("foo", "year", -county, -estimate) %>% 
+  ggplot() +
+  geom_col(aes(x = county, y = estimate, fill = year), 
+           position = "dodge") +
+  scale_fill_viridis_d() +
+  coord_flip() 
+```
+
+Third:  Simple ggplotly for one year (2016) but no slider.
+
+```{r}
+ggnc <- ggplot(nc_2016) +
+  geom_sf(aes(fill = estimate, color = estimate)) 
+
+ggplotly(ggnc)
+
+
+```
+
+fourth:  crosstalk shared data & slider
+
+```{r}
+shared_bigtable <- SharedData$new(big_table %>% 
+  mutate(year = as.numeric(year)))
+```
+
+```{r}
+filter_slider("mapyear", "YEAR", shared_bigtable, 
+              column=~year)
+```
+
+
+
+
+Fifth:  foo
+
+```{r}
+
+ggnc <- ggplot() +
+  geom_sf(data = nc_2016, 
+          aes(fill = estimate, color = estimate)) +
+  geom_sf(data = nc_2013, 
+          aes(fill = estimate, color = estimate)) 
+
+ggnc
+
+
+
+
+ggpp <- ggplotly(ggnc) %>% 
+  add_trace(
+    z = ~estimate,
+    frame = ~year)
+
+ggpp
+
+animation_slider(ggpp)
+```
+
+
+
+```{r}
+ggplotly(ggnc, tooltip = "NAME") %>% 
+  layout(
+    hovermode = "x",
+    margin = list(
+      t = 20,
+      b = 20,
+      l = 20,
+      r = 20),
+  )
+```
+
+
+
+
+
+
+
+## County Level Plotly 
+
+https://moderndata.plot.ly/county-level-choropleth-in-plotly-and-r/
+
+```{r}
+county_df <- map_data("county") 
+nc_county <- county_df %>% filter(region == "north carolina")
+
+  
+state_df <- map_data("state") 
+nc_df <- state_df %>% filter(region == "north carolina")
+
+
+```
+
+
+## Make Plotly Map
+
+```{r}
+boarder_white <- list(color = toRGB("white"), width = 2)
+
+usa_projection <- list(scope = "usa", 
+                       projection = list(type = "albers usa"),
+                       showlakes = TRUE,
+                       lakecolor = toRGB("white"))
+
+plotlymap <- plot_geo(big_table, locationmode = 'county names') %>% 
+  add_trace(
+    z = ~estimate, text = ~estimate, location = ~NAME,
+    color = ~estimate, colors = "Purples",
+    frame = ~NAME
+  ) %>% 
+  layout = usa_projection
+
+plotlymap
+```
+
+
+```{r}
+ggplotly()
+```
+
+
+
