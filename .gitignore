@@ -29,7 +29,6 @@ delete.md
 
 # RStudio files
 .Rproj.user/
-*.Rproj
 
 # Xaringan Slides
 */libs/*
