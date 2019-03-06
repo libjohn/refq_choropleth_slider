@@ -1,0 +1,19 @@
+---
+title: README
+author: "John Little"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+# refq_choropleth_slider
+
+The goal of refq_choropleth_slider is to demonstrate how to generate a plotly choropleth with a slider controling the year
+
