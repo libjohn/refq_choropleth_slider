@@ -1,0 +1,64 @@
+---
+title: "easing test"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(gganimate)
+```
+
+
+```{r}
+anim <- ggplot(mtcars, aes(mpg, disp)) +
+  geom_boxplot() +
+  transition_states(gear, transition_length = 2, state_length = 1) +
+  enter_fade() +
+  exit_fade()
+# NOT RUN {
+# Default uses linear easing
+animate(anim)
+# }
+```
+
+```{r}
+ggplot(mtcars, 
+       aes(factor(cyl), mpg)) +
+  geom_boxplot(aes(fill = cyl)) +
+  transition_states(cyl, 
+                    transition_length = 3, 
+                    state_length = 0.5) +
+  enter_recolor(color = "blue", fill = "orange") +
+  enter_fade(alpha = 0.5) +
+  enter_appear(early = TRUE) +
+  exit_recolor(color = "orange", fill = "blue") +
+  exit_fly(x_loc = 0, y_loc = 5) +
+  exit_fade(alpha = 0.3) +
+  exit_shrink(size = 0.1) +
+  ease_aes('quadratic-in-out') +
+  shadow_mark(past = FALSE, future = FALSE)
+```
+
+
+
+
+```{r}
+# Change all to 'cubic-in-out' for a smoother appearance
+anim1 <- anim +
+  ease_aes('cubic-in-out')
+# NOT RUN {
+animate(anim1)
+# }
+```
+
+
+```{r}
+# Only change easing of y variables
+anim2 <- anim +
+  ease_aes(y = 'bounce-in')
+# NOT RUN {
+animate(anim2)
+# }
+
+```
+
