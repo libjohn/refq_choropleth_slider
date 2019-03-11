@@ -86,10 +86,66 @@ ggplot(bg_r) +
   shadow_mark(past = TRUE, future = TRUE)
 ```
 
-
 ```{r}
 anim_save("animated_map.png")
 ```
+
+```{r}
+ggplot(bg_r) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  labs(title = 'Year: {closest_state}') +
+  transition_states(year, 
+                    transition_length = 0.4, 
+                    state_length = 0.4) +
+  shadow_mark(past = TRUE, future = TRUE)
+```
+
+```{r}
+anim_save("anim_map2.png")
+```
+
+
+
+```{r}
+ggplot(bg_r) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  coord_sf(datum = NA) +
+  labs(title = '{next_expression}') +
+  transition_filter(transition_length = 0.4, 
+                    filter_length = 0.4,
+                    year == "2013",
+                    year == "2014",
+                    year == "2015",
+                    year == "2016") +
+  enter_fade() +
+  exit_fade() +
+  shadow_mark(past = TRUE, future = TRUE)
+  
+```
+
+
+
+```{r}
+ggplot() +
+  geom_sf(data = nc_2013_r,
+          aes(fill = estimate, color = estimate)) +
+  geom_sf(data = nc_2014_r,
+          aes(fill = estimate, color = estimate)) +
+  geom_sf(data = nc_2015_r,
+          aes(fill = estimate, color = estimate)) +
+  geom_sf(data = nc_2016_r,
+          aes(fill = estimate, color = estimate)) +
+  coord_sf(datum = NA) +
+  labs(title = 'Year: {next_layer}') +
+  transition_layers(layer_length = 0.4,
+                    transition_length = 0.4) +
+  shadow_mark(past = TRUE, future = TRUE) +
+  #enter_fade() + 
+  exit_fade()
+```
+
+
+
 
 
 ![](animated_map.png)
