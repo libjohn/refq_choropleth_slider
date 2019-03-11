@@ -13,3 +13,5 @@ The goal of refq\_choropleth\_slider was to demonstrate how to generate a plotly
       shadow_mark(past = TRUE, future = TRUE)
 
 ![](animated_map.png "Annimated Example Choropleth")
+
+![](county_trans_filter.png "transition_filter Choropleth")

@@ -78,6 +78,8 @@ ggplot(bg_r) +
   
 ```
 
+### transition_time
+
 ```{r}
 ggplot(bg_r) +
   geom_sf(aes(fill = estimate, color = estimate)) +
@@ -90,6 +92,8 @@ ggplot(bg_r) +
 anim_save("animated_map.png")
 ```
 
+### transition_states
+
 ```{r}
 ggplot(bg_r) +
   geom_sf(aes(fill = estimate, color = estimate)) +
@@ -100,11 +104,8 @@ ggplot(bg_r) +
   shadow_mark(past = TRUE, future = TRUE)
 ```
 
-```{r}
-anim_save("anim_map2.png")
-```
 
-
+### transition_filter
 
 ```{r}
 ggplot(bg_r) +
@@ -120,10 +121,133 @@ ggplot(bg_r) +
   enter_fade() +
   exit_fade() +
   shadow_mark(past = TRUE, future = TRUE)
-  
 ```
 
 
+```{r}
+anim_save("anim_map2.png")
+```
+
+
+```{r}
+ggplot(bg_r) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  coord_sf(datum = NA) +
+  labs(title = "{next_expression}") +
+  transition_filter(transition_length = 0.4, 
+                    filter_length = 0.4,
+                    year == "2013",
+                    year == "2014",
+                    year == "2015",
+                    year == "2016") +
+  enter_fade() +
+  exit_fade() +
+  shadow_mark(past = TRUE, future = TRUE)
+```
+
+### Noodling
+
+```{r}
+bg_r_small <- bg_r %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Orange" | 
+         county == "Wake" |
+         county == "Durham")
+
+nc_2013_r_small <- nc_2013_r %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Orange" | 
+         county == "Wake" |
+         county == "Durham")
+
+nc_2014_r_small <- nc_2013_r %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Orange" | 
+         county == "Wake" |
+         county == "Durham")
+
+
+nc_2015_r_small <- nc_2013_r %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Orange" | 
+         county == "Wake" |
+         county == "Durham")
+
+
+nc_2016_r_small <- nc_2013_r %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Orange" | 
+         county == "Wake" |
+         county == "Durham")
+
+nc_2016_r_small$estimate <-
+  sample(nc_2016_r_small$estimate)
+nc_2015_r_small$estimate <-
+  sample(nc_2015_r_small$estimate)
+nc_2014_r_small$estimate <-
+  sample(nc_2014_r_small$estimate)
+nc_2013_r_small$estimate <-
+  sample(nc_2013_r_small$estimate)
+
+```
+
+```{r}
+ggplot(bg_r_small) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  labs(title = 'Year: {round(frame_time, 0) + 2}') +
+  transition_time(as.numeric(year)) +
+  shadow_mark(past = TRUE, future = TRUE)
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = nc_2013_r_small,
+          aes(fill = estimate, color = estimate)) +
+  geom_sf(data = nc_2014_r_small,
+          aes(fill = estimate, color = estimate)) +
+  geom_sf(data = nc_2015_r_small,
+          aes(fill = estimate, color = estimate)) +
+  geom_sf(data = nc_2016_r_small,
+          aes(fill = estimate, color = estimate)) +
+  coord_sf(datum = NA) +
+  labs(title = 
+         'Year: {(as.numeric(previous_layer) + 2012)}') +
+  transition_layers(layer_length = 0.4,
+                    transition_length = 0.4,
+                    keep_layers = FALSE) #+
+  #enter_fade() #+ 
+  #exit_fade() 
+
+#  shadow_mark(past = TRUE, future = TRUE)
+```
+
+
+```{r}
+
+yrs_txt <- c("2013", "2014", "2015", "2016")
+
+ggplot(bg_r_small) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  coord_sf(datum = NA) +
+  labs(title = "YEAR: {str_replace(str_replace(as.character(next_expression), 'year == \"', ''), '\"', '')}") +
+  transition_filter(transition_length = 0.4, 
+                    filter_length = 0.4,
+                    year == "2013",
+                    year == "2014",
+                    year == "2015",
+                    year == "2016") +
+  enter_fade() +
+  exit_fade() +
+  shadow_mark(past = TRUE, future = TRUE)
+```
+
+```{r}
+anim_save("county_trans_filter.png")
+```
+
+![](county_trans_filter.png)
+
+### transition_layer
 
 ```{r}
 ggplot() +
@@ -136,12 +260,13 @@ ggplot() +
   geom_sf(data = nc_2016_r,
           aes(fill = estimate, color = estimate)) +
   coord_sf(datum = NA) +
-  labs(title = 'Year: {next_layer}') +
+  labs(title = 'Year: ({2012 + next_layer})') +
   transition_layers(layer_length = 0.4,
-                    transition_length = 0.4) +
-  shadow_mark(past = TRUE, future = TRUE) +
+                    transition_length = 0.4,
+                    keep_layers = FALSE) #+
   #enter_fade() + 
-  exit_fade()
+  #exit_fade()
+  #shadow_mark(past = TRUE, future = TRUE) 
 ```
 
 

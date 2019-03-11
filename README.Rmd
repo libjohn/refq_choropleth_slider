@@ -25,3 +25,7 @@ ggplot(bg_r) +
 ```
 
 ![](animated_map.png "Annimated Example Choropleth")
+
+
+
+![](county_trans_filter.png "transition_filter Choropleth")
