@@ -16,3 +16,12 @@ knitr::opts_chunk$set(
 
 The goal of refq_choropleth_slider is to demonstrate how to generate a plotly choropleth with a slider controling the year
 
+```
+ggplot(bg_r) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  labs(title = 'Year: {round(frame_time, 0)}') +
+  transition_time(as.numeric(year)) +
+  shadow_mark(past = TRUE, future = TRUE)
+```
+
+![](animated_map.png "Annimated Example Choropleth")
