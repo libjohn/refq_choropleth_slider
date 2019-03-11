@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-The goal of refq_choropleth_slider is to demonstrate how to generate a plotly choropleth with a slider controling the year
+The goal of refq_choropleth_slider was to demonstrate how to generate a plotly choropleth with a slider filtering the year.  As the plot turns, I've decided that a slider filter with geom_sf polygons is not a feasible goal.  BUT, animating the choropleth via `gganimate` seems to work well.
 
 ```
 ggplot(bg_r) +
