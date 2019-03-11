@@ -2,7 +2,7 @@
 title: "Plotly Choropleth"
 author: "John Little"
 date: "`r Sys.Date()`"
-output: html_notebook
+output: html_document
 ---
 
 ## Load Libraries
@@ -11,10 +11,11 @@ output: html_notebook
 library(tidyverse)
 library(tidycensus)
 library(sf)
-library(plotly)
 library(crosstalk)
 library(leaflet)
 library(gganimate)
+library(tweenr)
+library(transformr)
 ```
 
 
@@ -70,7 +71,15 @@ st_geometry(big_table2) <- NULL
 first:  ggplot facet_wrap
 
 ```{r}
-ggplot(big_table) +
+bg1 <- big_table %>% 
+  #filter(NAME == "Pasquotank County, North Carolina")
+  mutate(estimate = if_else(estimate == 40419, 1000000, estimate)) %>% 
+  mutate(estimate = if_else(estimate == 40233, 900000, estimate)) %>% 
+  mutate(estimate = if_else(estimate == 40018, 500000, estimate))
+  
+           
+
+ggplot(bg1) +
   geom_sf(aes(fill = estimate, color = estimate)) +
   facet_wrap(~ year)
 ```
@@ -107,8 +116,11 @@ ggplotly(ggnc)
 fourth:  crosstalk shared data & slider
 
 ```{r}
-shared_bigtable <- SharedData$new(big_table %>% 
-  mutate(year = as.numeric(year)))
+bg2 <- big_table %>% 
+  mutate(year = as.Date(as.character(year),
+                        format = "%Y"))
+
+shared_bigtable <- SharedData$new(bg2)
 ```
 
 ```{r}
@@ -151,31 +163,46 @@ nc_share_leaf <- (shared_bigtable %>%
 bscols(nc_share_slide, nc_share_leaf)
 ```
 
-Fifth:  annimate with gganimate
+
+Fifth:  Make separate plots and animate laer
+
 
 ```{r}
-big3 <- big_table %>% mutate(year = as.numeric(year))
+plot_13 <- ggplot(nc_2013 %>% 
+                    mutate(estimate = if_else(estimate == 40419, 1000000, estimate))) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  ggtitle("2013")
 
-big3p <- ggplot() +
-  geom_sf(data = big3 %>% filter(year == 2016), 
-          aes(fill = estimate, color = estimate)) +
-  geom_sf(data = big3 %>% filter(year == 2013),
-          aes(fill = estimate, color = estimate)) +
-  coord_sf(crs = 4269, datum = NA) +
-  scale_fill_viridis_c() +
-  scale_color_viridis_c() +
-  view_zoom_manual(1, 1, xmin = views$xmin, xmax = views$xmax, 
-                   ymin = views$ymin, ymax = views$ymax, wrap = TRUE)
-  # facet_wrap(~ year) +
-  #  labs(title = 'Year: {frame_time}') +
-  #transition_time(year) +
-  #ease_aes('linear')
+plot_14 <- ggplot(nc_2014 %>% mutate(estimate = if_else(estimate == 40233, 900000, estimate))) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  ggtitle("2014") 
 
-big3p
+plot_15 <- ggplot(nc_2015 %>% mutate(estimate = if_else(estimate == 40018, 500000, estimate))) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  ggtitle("2015")
 
-animate(big3p, 100, 10)
+plot_16 <- ggplot(nc_2016) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  ggtitle("2016")
+
+
+ggsave("plot13.png", plot_13)
+ggsave("plot14.png", plot_14)
+ggsave("plot15.png", plot_15)
+ggsave("plot16.png", plot_16)
+
+# Go To https://gifmaker.me/
 ```
 
+Annimate iwth https://gifmaker.me
+
+and get this:
+
+![](Webp.net-gifmaker.gif)
+
+## gganimate
+
+an example
 
 ```{r}
 earth <- sf::st_as_sf(rnaturalearth::countries110)
@@ -191,113 +218,36 @@ p <- ggplot() +
 animate(p, 100, 10)
 ```
 
-
-
-
-```{r}
-plot_13 <- ggplot(nc_2013) +
-  geom_sf(aes(fill = estimate, color = estimate)) 
-
-plot_14 <- ggplot(nc_2014) +
-  geom_sf(aes(fill = estimate, color = estimate)) 
-
-plot_15 <- ggplot(nc_2015) +
-  geom_sf(aes(fill = estimate, color = estimate)) 
-
-plot_16 <- ggplot(nc_2016) +
-  geom_sf(aes(fill = estimate, color = estimate)) 
-
-plot_13
-```
-
-
-
-Sixth:  foo
+## gganimate exploration
 
 ```{r}
+polyplot <- function(data) {
+  p <- ggplot(data) + 
+    geom_polygon(aes(x, y, group = id, fill = col)) +
+    scale_fill_identity() +
+    coord_fixed(xlim = c(-1.5, 1.5), ylim = c(-1.5, 1.5))
+  plot(p)
+}
 
-ggnc <- ggplot() +
-  geom_sf(data = nc_2016, 
-          aes(fill = estimate, color = estimate)) +
-  geom_sf(data = nc_2013, 
-          aes(fill = estimate, color = estimate)) 
+star <- poly_star()
+star$col <- 'steelblue'
+circles <- poly_circles()
+circles$col <- c('forestgreen', 'firebrick', 'goldenrod')[circles$id]
 
-ggnc
+animation <- tween_polygon(star, circles, 'cubic-in-out', 40, id) %>% 
+  keep_state(10)
 
-
-
-
-ggpp <- ggplotly(ggnc) %>% 
-  add_trace(
-    z = ~estimate,
-    frame = ~year)
-
-ggpp
-
-animation_slider(ggpp)
+ani <- lapply(split(animation, animation$.frame), polyplot)
 ```
-
-
 
 ```{r}
-ggplotly(ggnc, tooltip = "NAME") %>% 
-  layout(
-    hovermode = "x",
-    margin = list(
-      t = 20,
-      b = 20,
-      l = 20,
-      r = 20),
-  )
+from_below <- function(data) {
+  data$y <- data$y - 2
+  data
+}
+animation <- tween_polygon(star, circles, 'cubic-in-out', 40, id, enter = from_below) %>% 
+  keep_state(10)
+
+ani <- lapply(split(animation, animation$.frame), polyplot)
 ```
-
-
-
-
-
-
-
-## County Level Plotly 
-
-https://moderndata.plot.ly/county-level-choropleth-in-plotly-and-r/
-
-```{r}
-county_df <- map_data("county") 
-nc_county <- county_df %>% filter(region == "north carolina")
-
-  
-state_df <- map_data("state") 
-nc_df <- state_df %>% filter(region == "north carolina")
-
-
-```
-
-
-## Make Plotly Map
-
-```{r}
-boarder_white <- list(color = toRGB("white"), width = 2)
-
-usa_projection <- list(scope = "usa", 
-                       projection = list(type = "albers usa"),
-                       showlakes = TRUE,
-                       lakecolor = toRGB("white"))
-
-plotlymap <- plot_geo(big_table, locationmode = 'county names') %>% 
-  add_trace(
-    z = ~estimate, text = ~estimate, location = ~NAME,
-    color = ~estimate, colors = "Purples",
-    frame = ~NAME
-  ) %>% 
-  layout = usa_projection
-
-plotlymap
-```
-
-
-```{r}
-ggplotly()
-```
-
-
 
