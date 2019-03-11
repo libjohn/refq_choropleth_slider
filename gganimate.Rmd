@@ -1,0 +1,95 @@
+---
+title: "gganimate"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(tidycensus)
+library(gganimate)
+```
+
+
+
+```{r}
+nc_2016 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          geometry = TRUE) %>% 
+  mutate(year = "2016")
+
+nc_2015 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2015,
+          geometry = TRUE) %>% 
+  mutate(year = "2015")
+
+nc_2014 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2014,
+          geometry = TRUE) %>% 
+  mutate(year = "2014")
+
+nc_2013 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2013,
+          geometry = TRUE) %>% 
+  mutate(year = "2013")
+```
+
+
+```{r}
+big_table <- rbind(nc_2016, nc_2015, nc_2014, nc_2013) 
+glimpse(big_table)
+
+#big_table2 <- big_table
+#st_geometry(big_table2) <- NULL
+```
+
+
+
+```{r}
+nc_2016_r <- nc_2016
+nc_2015_r <- nc_2015
+nc_2014_r <- nc_2014
+nc_2013_r <- nc_2013
+
+nc_2016_r$estimate <- sample(nc_2016_r$estimate)
+nc_2015_r$estimate <- sample(nc_2015_r$estimate)
+nc_2014_r$estimate <- sample(nc_2014_r$estimate)
+nc_2013_r$estimate <- sample(nc_2013_r$estimate)
+
+bg_r <- rbind(nc_2016_r, nc_2015_r, nc_2014_r, nc_2013_r) 
+```
+
+
+```{r}
+
+ggplot(bg_r) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  facet_wrap(~year)
+  
+```
+
+```{r}
+ggplot(bg_r) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  labs(title = 'Year: {round(frame_time, 0)}') +
+  transition_time(as.numeric(year)) +
+  shadow_mark(past = TRUE, future = TRUE)
+```
+
+
+```{r}
+anim_save("animated_map.png")
+```
+
+
+![](animated_map.png)
