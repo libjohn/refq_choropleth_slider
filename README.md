@@ -40,6 +40,9 @@ ggplot(bg_r) +
 
 ![](animated_map.png "Annimated Example Choropleth")
 
+Label Variables
+---------------
+
 Example of funking around with stringr to manipulate the label variables (see `transition_` [documentation](https://gganimate.com/reference/) for more)
 
 ``` r
