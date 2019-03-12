@@ -1,7 +1,7 @@
 README
 ================
 John Little
-2019-03-11
+2019-03-12
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 The goal of refq\_choropleth\_slider was to demonstrate how to generate a plotly choropleth with a slider filtering the year. As the plot turns, I've decided that a slider filter with geom\_sf polygons is not a feasible goal. BUT, animating the choropleth via `gganimate` seems to work well.
