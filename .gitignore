@@ -15,7 +15,6 @@ outfile/*
 # Output Files
 *.docx
 *.doc
-*.html
 delete.md
 
 # Example code in package build process

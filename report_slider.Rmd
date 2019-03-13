@@ -3,7 +3,10 @@ title: "Animate a choropleth"
 subtitle: "Feasibility of a slider filter"
 author: "John Little"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 Backdrop:  I spent several hours trying to use the `crosstalk` or `plotly` packages to generate a suitable choropleth with a slider filter.  The purpose of the slider filter should enable filtering by year so the end-user can see change over time.  In practice this proved to be unfeasible or unworkable.  The animation transitions were sloppy or goofy; the slider wouldn't work as expected.  In short the idea proved much easier than the execution.
