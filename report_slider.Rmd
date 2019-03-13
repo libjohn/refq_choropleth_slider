@@ -1,0 +1,150 @@
+---
+title: "Animate a choropleth"
+subtitle: "Feasibility of a slider filter"
+author: "John Little"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+Backdrop:  I spent several hours trying to use the `crosstalk` or `plotly` packages to generate a suitable choropleth with a slider filter.  The purpose of the slider filter should enable filtering by year so the enduser can see change over time.  In practice this proved to be unfeasible or unworkable.  The annimation transitions were sloppy or goofy; the slider wouldn't work as expected.  In short the idea proved much easier than the exectution.
+
+```{r echo=FALSE, fig.align='right', out.width='50%'}
+
+knitr::include_graphics('animated_map.png')
+
+```
+
+However, the resulting investigation show me several aspects about the practical execution of showing change over time.  I am shorthand documenting some of those issuse here.
+
+## Load Library Packages
+
+First, let's load the necessary pacakges.
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(tidycensus)
+library(sf)
+library(gganimate)
+```
+
+## Get Data
+
+Now let's get some ACS Census data and then scramble the data.  By scramble what I mean is randomize the data so that it's easier to see the changes over time.  Since the data re scrabled, there's really no need to know what the actual census variable means, but I'm pretty sure I started with population for North Carolina covering 2013 - 2016.
+
+```{r get ACS data, message=FALSE, warning=FALSE, results='hide'}
+nc_2016 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          geometry = TRUE,
+          cache_table = TRUE) %>% 
+  mutate(year = "2016")
+
+nc_2015 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2015,
+          geometry = TRUE,
+          cache_table = TRUE) %>% 
+  mutate(year = "2015")
+
+nc_2014 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2014,
+          geometry = TRUE,
+          cache_table = TRUE) %>% 
+  mutate(year = "2014")
+
+nc_2013 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2013,
+          geometry = TRUE,
+          cache_table = TRUE) %>% 
+  mutate(year = "2013")
+```
+
+## Wrangle Data
+
+Combine the small tables into a big table.  Make a copy of the same with scrambled data via `sample()`.  Additionally, make a scrambled table wihtout sf geometry for use in the barplot.
+
+```{r wrangle data}
+big_table <- rbind(nc_2016, nc_2015, nc_2014, nc_2013) 
+
+nc_2016_r <- nc_2016
+nc_2015_r <- nc_2015
+nc_2014_r <- nc_2014
+nc_2013_r <- nc_2013
+
+nc_2016_r$estimate <- sample(nc_2016_r$estimate)
+nc_2015_r$estimate <- sample(nc_2015_r$estimate)
+nc_2014_r$estimate <- sample(nc_2014_r$estimate)
+nc_2013_r$estimate <- sample(nc_2013_r$estimate)
+
+bg_r <- rbind(nc_2016_r, nc_2015_r, nc_2014_r, nc_2013_r)
+
+bg_r_nogeom <- bg_r
+sf::st_geometry(bg_r_nogeom) <- NULL  # remove geometry layer from the SF Tibble
+```
+
+
+## Facet Map
+
+Facet Maps are amazingly effective at showing change.  Perhaps this is actually better than animating.  It's certainly far less work useing the `facet_wrap()` function.
+
+```{r facetmap}
+
+ggplot(bg_r) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  coord_sf(crs = 4326, datum = NA) +
+  facet_wrap(~year)
+  
+```
+
+
+## Bar Plots
+
+Sometimes geography is not the best way to showcase data, **even when the data have a geographical element**.  The next plot visualizes the change over time for three countie in a side-by-side bar graph. The change over time is much more obvious when the yearly amount for relevant counties are positioned next to each other.
+
+Side-by-side bargraphs are a ggplot option useing `position = "dodge"`.
+
+A time-change question that is easier to answer with a bargraph than a choropleth is as follows:  *Which county has the highest annual amount for the year 2014?*.  Compare this question by looking at the choropleth facet map above and the bargraph below.
+
+```{r dodge-bargraph, fig.align='center'}
+bg_r_nogeom %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Mecklenburg" | 
+           county == "Durham" | 
+           county == "Guilford") %>% 
+  select(county, estimate, year) %>% 
+  gather("foo", "year", -county, -estimate) %>% 
+  ggplot() +
+  geom_col(aes(x = county, y = estimate, fill = year), 
+           position = "dodge") +
+  scale_fill_viridis_d()
+```
+
+## Annimate
+
+```{r}
+p <- ggplot(bg_r) +
+  geom_sf(aes(fill = estimate, color = estimate)) +
+  coord_sf(datum = NA) +
+  labs(title = '{next_expression}') +
+  transition_filter(transition_length = 0.4, 
+                    filter_length = 0.4,
+                    year == "2013",
+                    year == "2014",
+                    year == "2015",
+                    year == "2016") +
+  enter_fade() +
+  exit_fade() +
+  shadow_mark(past = TRUE, future = TRUE)
+
+animate(p)
+```
+
