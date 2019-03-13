@@ -1,0 +1,157 @@
+---
+title: "a crosstalk approach"
+output: html_notebook
+---
+
+```{r load packages, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(tidycensus)
+library(sf)
+library(gganimate)
+library(crosstalk)
+library(leaflet)
+```
+
+```{r get ACS data, message=FALSE, warning=FALSE, results='hide'}
+nc_2016 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          geometry = TRUE,
+          cache_table = TRUE) %>% 
+  mutate(year = "2016")
+
+nc_2015 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2015,
+          geometry = TRUE,
+          cache_table = TRUE) %>% 
+  mutate(year = "2015")
+
+nc_2014 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2014,
+          geometry = TRUE,
+          cache_table = TRUE) %>% 
+  mutate(year = "2014")
+
+nc_2013 <- 
+  get_acs(geography = "county",
+          variables = "B01003_001",
+          state = "NC",
+          year = 2013,
+          geometry = TRUE,
+          cache_table = TRUE) %>% 
+  mutate(year = "2013")
+```
+
+## Wrangle Data
+
+Combine the small tables into a big table.  Make a copy of the same with scrambled data via `sample()`.  Additionally, make a scrambled table without sf geometry for use in the bar plot.
+
+```{r wrangle data}
+big_table <- rbind(nc_2016, nc_2015, nc_2014, nc_2013) 
+
+nc_2016_r <- nc_2016
+nc_2015_r <- nc_2015
+nc_2014_r <- nc_2014
+nc_2013_r <- nc_2013
+
+nc_2016_r$estimate <- sample(nc_2016_r$estimate)
+nc_2015_r$estimate <- sample(nc_2015_r$estimate)
+nc_2014_r$estimate <- sample(nc_2014_r$estimate)
+nc_2013_r$estimate <- sample(nc_2013_r$estimate)
+
+bg_r <- rbind(nc_2016_r, nc_2015_r, nc_2014_r, nc_2013_r)
+
+bg_r_nogeom <- bg_r
+sf::st_geometry(bg_r_nogeom) <- NULL  # remove geometry layer from the SF Tibble
+
+bg_r_small <- bg_r %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Orange" | 
+         county == "Wake" |
+         county == "Durham")
+
+nc_2013_r_small <- nc_2013_r %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Orange" | 
+         county == "Wake" |
+         county == "Durham")
+
+nc_2014_r_small <- nc_2013_r %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Orange" | 
+         county == "Wake" |
+         county == "Durham")
+
+
+nc_2015_r_small <- nc_2013_r %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Orange" | 
+         county == "Wake" |
+         county == "Durham")
+
+
+nc_2016_r_small <- nc_2013_r %>% 
+  mutate(county = str_extract(NAME, "\\w+")) %>% 
+  filter(county == "Orange" | 
+         county == "Wake" |
+         county == "Durham")
+
+nc_2016_r_small$estimate <-
+  sample(nc_2016_r_small$estimate)
+nc_2015_r_small$estimate <-
+  sample(nc_2015_r_small$estimate)
+nc_2014_r_small$estimate <-
+  sample(nc_2014_r_small$estimate)
+nc_2013_r_small$estimate <-
+  sample(nc_2013_r_small$estimate)
+```
+
+
+## Practice 
+
+```{r}
+glimpse(bg_r_small)
+
+ggplot() +
+  geom_sf(data = bg_r_small %>% filter(year == "2016"),
+          aes(fill = estimate, color = estimate))
+```
+
+```{r}
+pal <- colorNumeric("viridis", NULL)
+
+leaflet(data = bg_r_small %>% filter(year == "2013")) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addPolygons(fillColor = ~pal(estimate),
+              fillOpacity = 0.8,
+              color = "#BDBDC3",
+              weight = 1)
+```
+
+## Shared Data
+
+https://stackoverflow.com/questions/42974140/crosstalk-filter-polylines-in-leaflet
+
+```{r}
+bg_r_small_shared <- SharedData$new(bg_r_small)
+
+pal <- colorNumeric("viridis", NULL)
+
+
+yr_chkb <- filter_checkbox("year_s", "Year", bg_r_small_shared, ~year)
+
+leaf_map <- leaflet(data = bg_r_small_shared %>% filter(year == ~year)) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addPolygons(fillColor = ~pal(estimate),
+              fillOpacity = 0.8,
+              color = "#BDBDC3",
+              weight = 1)
+```
+
