@@ -1,12 +1,12 @@
 README
 ================
 John Little
-2019-03-12
+2019-03-13
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 The goal of refq\_choropleth\_slider was to demonstrate how to generate a plotly choropleth with a slider filtering the year. As the plot turns, I've decided that a slider filter with geom\_sf polygons is not a feasible goal. BUT, animating the choropleth via `gganimate` seems to work well.
 
-The best documentation for animation will be found in the `gganimate.Rmd` file. The other files were exploring how `plotly` and `crosstalk` could be used to add a filter slider to the map. Those efforts proved less than idea.
+The best **documentation for animation** will be found in the [gganimate.Rmd](gganimate.Rmd) file. Other files explore how `plotly` and/or `crosstalk` could be used to add a filter slider to the map. Those efforts proved less than idea. Lastly, I wrote a [summary report](report_slider.Rmd) which compares different visualizations, animated or note, to showing choropleths over time.
 
 However, those efforts spawned learning more about gganimate. Summary code and output is below.
 
