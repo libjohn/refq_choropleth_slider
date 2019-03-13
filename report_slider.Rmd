@@ -8,7 +8,7 @@ output: html_document
 
 Backdrop:  I spent several hours trying to use the `crosstalk` or `plotly` packages to generate a suitable choropleth with a slider filter.  The purpose of the slider filter should enable filtering by year so the end-user can see change over time.  In practice this proved to be unfeasible or unworkable.  The animation transitions were sloppy or goofy; the slider wouldn't work as expected.  In short the idea proved much easier than the execution.
 
-```{r echo=FALSE, fig.align='right', out.width='50%'}
+```{r example animation, echo=FALSE, fig.align='right', out.width='50%'}
 
 knitr::include_graphics('animated_map.png')
 
@@ -20,7 +20,7 @@ However, the resulting investigation show me several aspects about the practical
 
 First, let's load the necessary packages.
 
-```{r message=FALSE, warning=FALSE}
+```{r load packages, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(tidycensus)
 library(sf)
@@ -136,7 +136,7 @@ nc_2013_r_small$estimate <-
 
 ## Facet Map
 
-Facet Maps are amazingly effective at showing change.  Perhaps this is actually better than animating.  It's certainly far less work using the `facet_wrap()` function.
+Facet Maps are amazingly effective at showing change.  Perhaps this is actually better than animating.  It's certainly far less work using the `facet_wrap()` function.  A benefit of a facet wrap is the ability to see all the data at one time.  This makes comparisons across non-consecutive views easier to perceive.
 
 ```{r facetmap}
 
@@ -156,7 +156,7 @@ Side-by-side bar graphs are a ggplot option using `position = "dodge"`.
 
 A time-change question that is easier to answer with a bar graph than a choropleth is as follows:  *Which county has the highest annual amount for the year 2014?*.  Compare this question by looking at the choropleth facet map above and the bar graph below.
 
-```{r dodge-bargraph, fig.align='center'}
+```{r dodge-bargraph, fig.align='center', fig.cap="Highest County for 2014?"}
 bg_r_nogeom %>% 
   mutate(county = str_extract(NAME, "\\w+")) %>% 
   filter(county == "Mecklenburg" | 
@@ -170,11 +170,11 @@ bg_r_nogeom %>%
   scale_fill_viridis_d()
 ```
 
-## Annimate
+## Animate
 
 First the whole of North Carolina.  This takes some CPU processing time.
 
-```{r annimate ncchoropleth}
+```{r animate nc choropleth}
 p <- ggplot(bg_r) +
   geom_sf(aes(fill = estimate, color = estimate)) +
   coord_sf(datum = NA) +
@@ -194,7 +194,7 @@ animate(p)
 
 Let's do a subset of counties.  It's quicker.  The main point of this animation is to transform the text label with the stringr package.  It seems a bit overwrought but it works.
 
-```{r animate 3 counties}
+```{r animate 3 counties, fig.align="center", fig.cap="Better Title. i.e. label variables"}
 
 pcounty <- ggplot(bg_r_small) +
   geom_sf(aes(fill = estimate, color = estimate)) +
@@ -227,4 +227,4 @@ Or you can do this with Tableau.  Lots to discuss about this approach but I'll l
 ![](images/dashboard--slider.png "Tableau Dashboard with Slider"  )
 
 
-!["Buttons instead of Slider"](images/dashboard--buttons.png "Dashboard with Buttons" )
+![](images/dashboard--buttons.png "Dashboard with Buttons" )
