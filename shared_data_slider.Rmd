@@ -3,6 +3,8 @@ title: "a crosstalk approach"
 output: html_notebook
 ---
 
+Still wondering if I can make this work with crosstalk.  But I cannot, at the moment.  According to [this](https://stackoverflow.com/questions/42974140/crosstalk-filter-polylines-in-leaflet) leaflet shared data only works with markers and does not work with polygons (choropleths).
+
 ```{r load packages, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(tidycensus)
@@ -138,6 +140,8 @@ leaflet(data = bg_r_small %>% filter(year == "2013")) %>%
 ## Shared Data
 
 https://stackoverflow.com/questions/42974140/crosstalk-filter-polylines-in-leaflet
+
+investigated this but the important part is that this works with a forked version of crosstalk/leaflet that is put in as a pull-request but has not been accepted as of the moment (3/14/2019)
 
 ```{r}
 bg_r_small_shared <- SharedData$new(bg_r_small)
